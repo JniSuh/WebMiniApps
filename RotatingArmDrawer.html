@@ -1,0 +1,158 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    input[type="number"] {width: 50px;}
+
+    #box {
+        width: 550px; height: 550px;
+        border: 2px black solid;
+        margin: 200px auto 0px auto;
+        display: grid;
+    }
+
+    .dot {
+        height: 2px; 
+        width: 2px;
+        border-radius: 50%;
+        background-color: green;
+        position: absolute;
+    }
+
+    #point-zero {
+        width: 0px; height: 0px;
+        align-self: center;
+        justify-self: center;
+        background-color: black;
+        padding: 3px;
+        border-radius: 50%;
+    }
+
+    #first-arm {
+        position: absolute;
+        width: 150px;
+        padding-bottom: 2px;
+        background-color: black;
+        display: grid;
+        justify-items: end;
+    }
+    #second-arm {
+        position: absolute;
+        width: 50px;
+        padding-bottom: 2px;
+        background-color: grey;
+        display: grid;
+        justify-items: end;
+    }
+    #third-arm {
+        position: absolute;
+        width: 25px;
+        padding-bottom: 2px;
+        background-color: red;
+        display: grid;
+    }
+</style>
+<body>
+    <div style="position: absolute; top: 0px; left: 0px; float:left; border: 1px solid black; padding: 5px;">
+        <h3 style="margin-top: 0px;">Speed settings</h3>
+        Arm 1 <input type="number" onchange="reset();" id="speed1" step="0.25" value="0.5"><br>
+        Arm 2 <input type="number" onchange="reset();" id="speed2" step="0.25" value="1"><br>
+        Arm 3 <input type="number" onchange="reset();" id="speed3" step="0.25" value="1.5">
+        <hr>
+        Dots <input type="checkbox" id="drawDots">
+        <hr>
+        <button onclick="reset();start()" style="float: left;">Start</button>
+        <button onclick="stop()" style="float: right;">Stop</button>
+    </div>
+    
+    <div id="box">
+        <div id="point-zero">
+            <div id="first-joint">
+                <div id="first-arm">
+                    <div id="second-joint">
+                        <div id="second-arm">
+                            <div id="third-joint">
+                                <div id="third-arm">
+                                    <div id="start-point" style="justify-self: start;"></div>
+                                    <div id="middle-point" style="justify-self: center;"></div>
+                                    <div id="end-point" style="justify-self: end;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dots"></div>
+</body>
+<script>
+    class arm {
+        constructor(element,speedInput) {
+            this.joint = element; 
+            this.speed = () => parseFloat(speedInput.value);
+            this.rot = 0;
+        }
+    }
+    
+    const timeout = 10;
+    const $ = selector => document.querySelector(selector);
+    
+    let timer = null;
+    let existingCoords = [];
+
+    const arms = [
+        new arm($('#first-joint'), $('#speed1')), 
+        new arm($('#second-joint'), $('#speed2')), 
+        new arm($('#third-joint'), $('#speed3'))
+    ];
+    const points = [
+        // $('#start-point'), 
+        // $('#middle-point'), 
+        $('#end-point')
+    ];
+
+    function timerFunc() {
+        arms.forEach(arm => rotateArm(arm));
+        if ($('#drawDots').checked) points.forEach(point => drawDot(point));
+        console.log(existingCoords.length);
+    }
+
+    function rotateArm(arm) {
+        arm.rot += arm.rot >= 360 ? arm.speed()-360 : arm.speed();
+        arm.joint.style.rotate = arm.rot+'deg';
+    }
+
+    function drawDot(point) {
+        let coords = point.getBoundingClientRect();
+        coords = [coords.top, coords.left];
+
+        if (!existingCoords.some(c => c[0]===coords[0] && c[1]===coords[1])) {   
+            let dot = document.createElement('span');
+            dot.classList.add('dot');
+            dot.style.cssText = `top: ${coords[0]}; left: ${coords[1]};`;
+            $('#dots').appendChild(dot);
+            existingCoords.push(coords);
+        }
+    }
+
+    function reset() {
+        existingCoords = [];
+        while (document.getElementsByTagName('span').length > 0) 
+            for (let dot of document.getElementsByTagName('span')) 
+                dot.remove();
+    }
+    function stop() { clearInterval(timer); timer = null; }
+    function start() { 
+        if (timer == null) { 
+            timer = setInterval(timerFunc, timeout); 
+            console.log('starting');            
+        }
+        else console.log('already started');
+    }
+</script>
+</html>
