@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -5,154 +6,176 @@
     <title>Document</title>
 </head>
 <style>
-    input[type="number"] {width: 50px;}
-
-    #box {
-        width: 550px; height: 550px;
-        border: 2px black solid;
-        margin: 200px auto 0px auto;
-        display: grid;
-    }
-
-    .dot {
-        height: 2px; 
-        width: 2px;
-        border-radius: 50%;
-        background-color: green;
-        position: absolute;
-    }
-
-    #point-zero {
-        width: 0px; height: 0px;
-        align-self: center;
-        justify-self: center;
+    body {
         background-color: black;
-        padding: 3px;
-        border-radius: 50%;
     }
-
-    #first-arm {
+    canvas {
+        /* border: 1px solid black; */
         position: absolute;
-        width: 150px;
-        padding-bottom: 2px;
-        background-color: black;
-        display: grid;
-        justify-items: end;
     }
-    #second-arm {
-        position: absolute;
-        width: 50px;
-        padding-bottom: 2px;
-        background-color: grey;
-        display: grid;
-        justify-items: end;
-    }
-    #third-arm {
-        position: absolute;
-        width: 25px;
-        padding-bottom: 2px;
-        background-color: red;
-        display: grid;
+    div {
+        display: flex;
+        justify-content: center;
     }
 </style>
 <body>
-    <div style="position: absolute; top: 0px; left: 0px; float:left; border: 1px solid black; padding: 5px;">
-        <h3 style="margin-top: 0px;">Speed settings</h3>
-        Arm 1 <input type="number" onchange="reset();" id="speed1" step="0.25" value="0.5"><br>
-        Arm 2 <input type="number" onchange="reset();" id="speed2" step="0.25" value="1"><br>
-        Arm 3 <input type="number" onchange="reset();" id="speed3" step="0.25" value="1.5">
-        <hr>
-        Dots <input type="checkbox" id="drawDots">
-        <hr>
-        <button onclick="reset();start()" style="float: left;">Start</button>
-        <button onclick="stop()" style="float: right;">Stop</button>
+    <div>
+        <canvas id="armCanvas" style="z-index: 2;"></canvas>
+        <canvas id="dotCanvas" style="z-index: 1;"></canvas>
     </div>
     
-    <div id="box">
-        <div id="point-zero">
-            <div id="first-joint">
-                <div id="first-arm">
-                    <div id="second-joint">
-                        <div id="second-arm">
-                            <div id="third-joint">
-                                <div id="third-arm">
-                                    <div id="start-point" style="justify-self: start;"></div>
-                                    <div id="middle-point" style="justify-self: center;"></div>
-                                    <div id="end-point" style="justify-self: end;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <script>
+        /*
+        Canvas logic:
+            there are 2 canvases on top of each other. this is because the upper canvas, which
+            has the arms, needs to be cleared after each cycle, so only the current positions
+            of the arms are displayed.
+            on the other hand, the lower canvas, which has the drawn lines, requires to not be
+            cleared so the image can actually be viewed. this also enables being able to save the
+            created image, without having to include the arms also.
 
-    <div id="dots"></div>
+        Arm logic:
+            in this code, an arm is an array of joints, which are the interconnected smaller lines
+            on the upper canvas, which are rotated each cycle by the amount specified when creating
+            the joint.
+            there can be multiple arms working side by side. arms are stored in an array (arms[]), 
+            which the timer callback iterates through to rotate each arm.
+
+        How the arms rotate:
+            as stated above, arms are arrays of joints. each timer cycle the callback iterates through
+            each joint in each arm, and increases the rotation of the current joint by its own 
+            specific value. 
+            the starting point of the current joint is the calculated ending point of the 
+            previous joint. 
+            the ending point of the current joint is calculated using the sine and cosin formulas.
+            as we know the rotation of the joint and the length of the joint (used as hypotenuse), we can 
+            figure out the x and y axes:
+            sin(rotation) = x/hypotensue
+            cos(rotation) = y/hypotenuse
+        */
+
+        // declarations
+        const 
+        armCanvas = document.getElementById('armCanvas'),
+        dotCanvas = document.getElementById('dotCanvas'),
+        armCtx = armCanvas.getContext('2d'),
+        dotCtx = dotCanvas.getContext('2d'),
+        dotRadius = 1; // width of dots
+
+        // contains all arms
+        let arms = [];
+
+        // a function to make adding new arms easier.
+        // takes in a 2d array of joint options, which are [joint_length, joint_speed],
+        // which it then converts to an array of joint objects (an arm) and appends it to arms[].
+        // also takes in optional argument for the starting rotation of the arm
+        let addArm = (jointOptions, rotation=0) => {
+            let newArm = jointOptions.map(jointOpt => // converts jointOptions into an array of joints
+                new joint(
+                    jointOpt[0], // joint length
+                    jointOpt[1], // joint speed
+                    rotation, 
+                    [armCanvas.width/2, armCanvas.height/2] // set the starting point to the center of the canvas
+                )
+            );
+            arms.push(newArm);
+        }
+
+        // end of declarations
+                    
+        document.body.onload = function() {
+            // set canvas dimensions to those of the current window
+            armCanvas.width = dotCanvas.width = window.innerWidth;
+            armCanvas.height = dotCanvas.height = window.innerHeight;
+            
+            // add first arm
+            addArm([
+                [25, 1], 
+                [25, 3],
+                [25, 2],
+                [25, -3],
+                [25, -1],
+                [25, 2.5],
+                [25, -1],
+            ]);
+
+            // add second arm, starting with 180 degree rotation
+            addArm([
+                [10,1],
+                [20,2],
+                [30,3]
+            ],180);
+
+            // set canvas2 background color
+            dotCtx.fillStyle = 'black';
+            dotCtx.fillRect(0,0,dotCanvas.width,dotCanvas.height);
+            dotCtx.fill();
+            
+            armCtx.strokeStyle = 'lightgrey'; // set arm color
+            dotCtx.fillStyle = 'white'; // set dot color
+            
+            armCtx.lineWidth = 2; // set arm width
+
+            // timer for updating lines on canvases
+            setInterval(() => {
+                // clear previous lines of arms
+                armCtx.clearRect(0, 0, armCanvas.width, armCanvas.height);
+    
+                // iterate through the array of arms and rotate each joint from every arm
+                arms.forEach(arm => rotateArm(arm));
+            }, 1);
+            
+            // functions
+
+            // goes through the joints in the given arm and rotates every joint
+            function rotateArm(arm) {
+                let prevPoint = arm[0].point;
+
+                for (let joint of arm) {
+                    joint.deg += joint.incr * 0.5 - (joint.deg < 360 ? 360 : 0);
+                    joint.point = prevPoint; // set the starting point of the joint to that of the previous one
+    
+                    prevPoint = drawJoint(joint);
+                }
+                drawDot(prevPoint); // draw a dot at the end point of the arm
+            }
+
+            // draw a line depicting the joint on the canvas
+            function drawJoint(arm) {
+                // calculate the x and y axes of the ending point
+                // the 'Math.PI / 180 * arm.deg' translates degrees to radians,
+                // since Math.sin()/.cos() use radians instead
+                let x = arm.width / (1 / Math.cos(Math.PI / 180 * arm.deg));
+                let y = arm.width / (1 / Math.sin(Math.PI / 180 * arm.deg));
+
+                let endPoint = [arm.point[0] + x, arm.point[1] + y];
+                
+                // draw a line between the starting and ending point of this joint
+                armCtx.beginPath();
+                armCtx.moveTo(arm.point[0], arm.point[1]);
+                armCtx.lineTo(endPoint[0], endPoint[1]);
+                armCtx.stroke();
+
+                return endPoint; // return the ending point of the joint for the next one
+            }
+
+            // draw a dot on the given coordinates
+            function drawDot(point) {
+                dotCtx.beginPath();
+                dotCtx.arc(point[0], point[1], dotRadius, 0, Math.PI*2);
+                dotCtx.fill();
+            }
+        }
+
+        // every joint has their own individual values for rotation, width, etc.
+        class joint {
+            constructor(width, incr, deg=0, point=[0,0]) { 
+                this.width = width; // defines the length of the joint
+                this.incr = incr; // the rotation of this joint is increased by this each cycle
+                this.deg = deg; // keeps track of the rotation of this joint
+                this.point = point; // defines the starting point of this joint. updated during each cycle
+            }
+        }
+    </script>
 </body>
-<script>
-    class arm {
-        constructor(element,speedInput) {
-            this.joint = element; 
-            this.speed = () => parseFloat(speedInput.value);
-            this.rot = 0;
-        }
-    }
-    
-    const timeout = 10;
-    const $ = selector => document.querySelector(selector);
-    
-    let timer = null;
-    let existingCoords = [];
-
-    const arms = [
-        new arm($('#first-joint'), $('#speed1')), 
-        new arm($('#second-joint'), $('#speed2')), 
-        new arm($('#third-joint'), $('#speed3'))
-    ];
-    const points = [
-        // $('#start-point'), 
-        // $('#middle-point'), 
-        $('#end-point')
-    ];
-
-    function timerFunc() {
-        arms.forEach(arm => rotateArm(arm));
-        if ($('#drawDots').checked) points.forEach(point => drawDot(point));
-        console.log(existingCoords.length);
-    }
-
-    function rotateArm(arm) {
-        arm.rot += arm.rot >= 360 ? arm.speed()-360 : arm.speed();
-        arm.joint.style.rotate = arm.rot+'deg';
-    }
-
-    function drawDot(point) {
-        let coords = point.getBoundingClientRect();
-        coords = [coords.top, coords.left];
-
-        if (!existingCoords.some(c => c[0]===coords[0] && c[1]===coords[1])) {   
-            let dot = document.createElement('span');
-            dot.classList.add('dot');
-            dot.style.cssText = `top: ${coords[0]}; left: ${coords[1]};`;
-            $('#dots').appendChild(dot);
-            existingCoords.push(coords);
-        }
-    }
-
-    function reset() {
-        existingCoords = [];
-        while (document.getElementsByTagName('span').length > 0) 
-            for (let dot of document.getElementsByTagName('span')) 
-                dot.remove();
-    }
-    function stop() { clearInterval(timer); timer = null; }
-    function start() { 
-        if (timer == null) { 
-            timer = setInterval(timerFunc, timeout); 
-            console.log('starting');            
-        }
-        else console.log('already started');
-    }
-</script>
 </html>
