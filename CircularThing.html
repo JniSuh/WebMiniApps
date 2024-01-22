@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    body {
+        margin: 0px;
+    }
+    canvas {
+        position: absolute;
+    }
+</style>
+<body>
+    <div>
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas'),
+        ctx = canvas.getContext('2d'),
+        circleRadius = 150,
+        circleOffset = 150,
+        circleSpeed = 3;
+
+        let circles = [];
+
+        document.body.onload = function() {
+            // set canvas dimensions to those of the current window
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            // set canvas options
+            ctx.strokeStyle = 'grey';
+            ctx.fillStyle = 'navy';
+
+            // save the center point of canvas
+            const centerPt = [canvas.width/2, canvas.height/2];
+
+            let circle_count = 72;
+            let rotationOffset = 0;
+
+            /*
+            0 = single rotating ball
+            5 = heart beat
+            120 = 3 rotating balls
+            165 = star
+            175 = rotating cross
+            180 = 2 parallel rotating balls
+            185 = double heart beat
+            350 = 3 point spinner
+            355 = single rotating line
+            */
+
+            let rot = 0;
+            for (let i = 1; i <= circle_count; i++) {
+                let deg = 360 / circle_count * i;
+
+                let x = circleOffset / (1 / Math.cos(Math.PI / 180 * deg));
+                let y = circleOffset / (1 / Math.sin(Math.PI / 180 * deg));
+
+                circles.push(new dot([centerPt[0]+x, centerPt[1]+y], rot));
+
+                rot += rotationOffset;
+            }
+
+            setInterval(() => {
+                ctx.clearRect(0, 0, canvas.width, canvas.width);
+
+                circles.forEach(circle => {
+                    drawCircle(circle.point);
+                    drawDot(circle);
+
+                    circle.rotation += circleSpeed - (circle.rotation < 360 ? 0 : 360);
+                });
+            }, 10);
+
+            function drawCircle(point) {
+                ctx.beginPath();
+                ctx.arc(point[0], point[1], circleRadius, 0, Math.PI*2);
+                ctx.stroke();
+            }
+
+            function drawDot(dot) {
+                let x = circleRadius / (1 / Math.cos(Math.PI / 180 * dot.rotation));
+                let y = circleRadius / (1 / Math.sin(Math.PI / 180 * dot.rotation));
+                
+                ctx.beginPath();
+                ctx.arc(dot.point[0]+x, dot.point[1]+y, 5, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+
+        class dot {
+            constructor(point, rotation) {
+                this.point = point;
+                this.rotation = rotation;
+            }
+        }
+    </script>
+</body>
+</html>
