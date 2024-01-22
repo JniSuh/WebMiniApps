@@ -8,6 +8,7 @@
 <style>
     body {
         background-color: black;
+        margin: 0px;
     }
     canvas {
         /* border: 1px solid black; */
@@ -52,6 +53,15 @@
             figure out the x and y axes:
             sin(rotation) = x/hypotensue
             cos(rotation) = y/hypotenuse
+
+                x
+    center  _ _ _ _ _ _ 
+    point   \  \    |__|
+              \/       |
+                \      |  y
+      hypotenuse  \    |
+                    \  |
+                      \|
         */
 
         // declarations
@@ -70,41 +80,182 @@
         // which it then converts to an array of joint objects (an arm) and appends it to arms[].
         // also takes in optional argument for the starting rotation of the arm
         let addArm = (jointOptions, rotation=0) => {
-            let newArm = jointOptions.map(jointOpt => // converts jointOptions into an array of joints
-                new joint(
-                    jointOpt[0], // joint length
-                    jointOpt[1], // joint speed
-                    rotation, 
-                    [armCanvas.width/2, armCanvas.height/2] // set the starting point to the center of the canvas
-                )
-            );
+            let newArm = {
+                joints: jointOptions.map(jointOpt => { // converts jointOptions into an array of joints
+                    return new joint(
+                        jointOpt[0], // joint length
+                        jointOpt[1], // joint speed
+                        rotation, 
+                        [armCanvas.width/2, armCanvas.height/2] // set the starting point to the center of the canvas
+                    )
+                }),
+                prevDot: [null,null]
+            }
+            
             arms.push(newArm);
         }
 
         // end of declarations
                     
         document.body.onload = function() {
+            // set lower canvas draw mode; options: 'dot', 'line'
+            const drawMode = 'line';
+
             // set canvas dimensions to those of the current window
             armCanvas.width = dotCanvas.width = window.innerWidth;
             armCanvas.height = dotCanvas.height = window.innerHeight;
             
-            // add first arm
-            addArm([
-                [25, 1], 
-                [25, 3],
-                [25, 2],
-                [25, -3],
-                [25, -1],
-                [25, 2.5],
-                [25, -1],
-            ]);
+            //
+            // Presets
+            //
 
-            // add second arm, starting with 180 degree rotation
+            // 'beetle'
+            // addArm([
+            //     [25, 1], 
+            //     [25, 3],
+            //     [25, 2],
+            //     [25, -3],
+            //     [25, -1],
+            //     [25, 2.5],
+            //     [25, -1],
+            // ]);
+
+            // 'ball thing, with 180 degree rotation'
+            // addArm([
+            //     [10,1],
+            //     [20,2],
+            //     [30,3]
+            // ],180);
+
+            // 'yarn'
+            // addArm([
+            //     [100, 1],
+            //     [50, 2.1]
+            // ], 180);
+            
+            // 'flower'
+            // addArm([
+            //     [100, 1],
+            //     [50, 2.25]
+            // ]);
+
+            // 'spiral x2'
+            // addArm([
+            //     [100, 2],
+            //     [50, 2.25]
+            // ]);
+            // addArm([
+            //     [100, 2],
+            //     [50, 2.25]
+            // ], 180);
+
+            // 'eye yarn'
+            // addArm([
+            //     [50, 2.25],
+            //     [100, 1.1]
+            // ]);
+
+            // 'eye yarn x2'
+            // addArm([
+            //     [50, 2.25],
+            //     [100, 1.1]
+            // ]);
+            // addArm([
+            //     [50, 2.25],
+            //     [100, 1.1]
+            // ], 180);
+
+            'layered infinity'
             addArm([
-                [10,1],
-                [20,2],
-                [30,3]
-            ],180);
+                [100, 1],
+                [100, 1.66]
+            ], 90);
+
+            // 'sausage'
+            // addArm([
+            //     [100, 1.1],
+            //     [100, 1],
+            //     [100, -1]
+            // ]);
+
+            // 'fidget spinner'
+            // addArm([
+            //     [75, 1.6],
+            //     [50, 1],
+            //     [75, -0.5],
+            //     [50, 1]
+            // ]);
+
+            // 'apple'
+            // addArm([
+            //     [50, 2],
+            //     [100, 1],
+            //     [25, -0.9],
+            // ], 90);
+
+            // 'egg'
+            // addArm([
+            //     [25, 2],
+            //     [25, 1],
+            //     [25, -0.9],
+            //     [25, 1],
+            //     [25, -1]
+            // ], 90);
+
+            // 'loopy loops extra loop'
+            // addArm([
+            //     [50, 2],
+            //     [100, 1],
+            //     [100, -3],
+            //     [25, -0.9],
+            // ]);
+
+            // 'loopy loops'
+            // addArm([
+            //     [50, 1],
+            //     [100, 1],
+            //     [100, -2],
+            //     [25, -0.9],
+            // ]);
+
+            // 'fish'
+            // addArm([
+                // [50, -2],
+                // [100, 1],
+                // [100, -1],
+                // [25, -0.9],
+            // ]);
+
+            // 'almost infinity'
+            // addArm([
+            //     [50, -3],
+            //     [100, 1],
+            //     [100, -1],
+            //     [25, -0.9],
+            // ]);
+
+            // 'diamond'
+            // addArm([
+            //     [50, -3],
+            //     [100, 1],
+            //     [25, -0.9],
+            // ]);
+
+            // 'infinity'
+            // addArm([
+            //     [50, -3],
+            //     [65, 1],
+            //     [100, -1],
+            //     [25, -0.9],
+            // ]);
+
+            //
+            // End of presets
+            //
+
+            //
+            // Canvas settings
+            //
 
             // set canvas2 background color
             dotCtx.fillStyle = 'black';
@@ -112,9 +263,16 @@
             dotCtx.fill();
             
             armCtx.strokeStyle = 'lightgrey'; // set arm color
-            dotCtx.fillStyle = 'white'; // set dot color
-            
-            armCtx.lineWidth = 2; // set arm width
+            armCtx.lineWidth = 3; // set arm width
+
+            dotCtx.fillStyle = 'yellow';
+            dotCtx.strokeStyle = 'yellow'; // set line color
+            dotCtx.lineWidth = 1; // set line width
+            dotCtx.lineCap = 'round'; // set line corner radius
+
+            //
+            // End of canvas settings
+            //
 
             // timer for updating lines on canvases
             setInterval(() => {
@@ -129,15 +287,31 @@
 
             // goes through the joints in the given arm and rotates every joint
             function rotateArm(arm) {
-                let prevPoint = arm[0].point;
+                let prevPoint = arm.joints[0].point;
 
-                for (let joint of arm) {
-                    joint.deg += joint.incr * 0.5 - (joint.deg < 360 ? 360 : 0);
+                for (let joint of arm.joints) {
+                    joint.deg += joint.incr - (joint.deg < 360 ? 360 : 0);
                     joint.point = prevPoint; // set the starting point of the joint to that of the previous one
     
                     prevPoint = drawJoint(joint);
                 }
-                drawDot(prevPoint); // draw a dot at the end point of the arm
+
+                switch(drawMode) {
+                    case 'dot':
+                        drawDot(prevPoint); // draw a dot at the end point of the arm
+                        break;
+
+                    case 'line':
+                        if (arm.prevDot.every(c => c != null)) {
+                            dotCtx.beginPath();
+                            dotCtx.moveTo(arm.prevDot[0], arm.prevDot[1]);
+                            dotCtx.lineTo(prevPoint[0], prevPoint[1]);
+                            dotCtx.stroke();
+                        }
+                        break;
+                }
+
+                arm.prevDot = prevPoint;
             }
 
             // draw a line depicting the joint on the canvas
@@ -165,6 +339,16 @@
                 dotCtx.arc(point[0], point[1], dotRadius, 0, Math.PI*2);
                 dotCtx.fill();
             }
+        }
+
+        function downloadCanvas() {
+            let date = new Date();
+
+            let a = document.createElement('a');
+            a.download = `canvas_${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()}_${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+            a.target = '_blank';
+            a.href = dotCanvas.toDataURL();
+            a.click();
         }
 
         // every joint has their own individual values for rotation, width, etc.
