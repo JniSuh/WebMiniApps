@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    body {
+        margin: 0px;
+    }
+
+    canvas {
+        position: absolute;
+    }
+</style>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        function mathFunc(inputValue) {
+            return inputValue * 2 * multiplier;
+        }
+
+        const canvas = document.getElementById('canvas'),
+        ctx = canvas.getContext('2d');
+
+        let divisions = 200;
+        let multiplier = 5;
+
+        document.body.onload = function() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const circleRadius = canvas.width < canvas.height ? canvas.width/2.5 : canvas.height/2.5;
+
+            const centerPt = [canvas.width/2, canvas.height/2];
+
+            setInterval(() => {
+                clearCanvas();
+                drawCircle(centerPt, circleRadius);
+                
+                for (let i = 1; i <= divisions; i++) {
+                    // drawDot(getEndPoint(centerPt, 360 / divisions * i, circleRadius), 5);
+
+                    let rot = 360 / divisions * mathFunc(i);
+        
+                    drawLine(
+                        getEndPoint(centerPt, 360/divisions*i, circleRadius),
+                        getEndPoint(centerPt, rot, circleRadius)
+                    );
+                }
+
+                // divisions += 0.05;
+                // console.log('divisions: ' + divisions);
+                
+                multiplier += 0.001;
+                console.log('multiplier: ' + multiplier);
+
+            }, 10);
+
+            function clearCanvas() {
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fill();
+            }
+            function drawCircle(point, radius) {
+                ctx.strokeStyle = 'orange';
+                ctx.beginPath();
+                ctx.arc(point[0], point[1], radius, 0, Math.PI*2);
+                ctx.stroke();
+            }
+            function drawDot(point, radius) {
+                ctx.fillStyle = 'green';
+                ctx.beginPath();
+                ctx.arc(point[0], point[1], radius, 0, Math.PI*2);
+                ctx.fill();
+            }
+            function drawLine(startPt, endPt) {
+                ctx.strokeStyle = 'orange';
+                ctx.beginPath();
+                ctx.moveTo(startPt[0], startPt[1]);
+                ctx.lineTo(endPt[0], endPt[1]);
+                ctx.stroke();
+            }
+            function getEndPoint(point, angle, radius) {
+                return [
+                    point[0] + radius / (1 / Math.cos(Math.PI / 180 * angle)),
+                    point[1] + radius / (1 / Math.sin(Math.PI / 180 * angle))
+                ];
+            }
+        }
+    </script>
+</body>
+</html>
